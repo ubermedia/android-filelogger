@@ -8,6 +8,9 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
+import android.os.Build;
+import android.support.v4.content.FileProvider;
+import android.util.Log;
 import android.widget.Toast;
 
 /**
@@ -49,17 +52,40 @@ public class LogCollectorEmail implements LogCollecting {
 	 * @param logger      the logger containing the data to send
 	 * @param tempLogFile the temporary file used to store the content of the email (call {@link File#deleteOnExit()} when done).
 	 *                    The file needs to be readable by another process
+	 * @param authority   the authority used to get Uri from tempLogFile
 	 */
-	public void sendMail(FileLogger logger, File tempLogFile) {
+	public void sendMail(FileLogger logger, File tempLogFile, String authority) {
 		logger.setFinalPath(tempLogFile);
 		logger.collectlogs(this);
+		logger.setAuthority(authority);
+	}
+
+	public Uri getFileUriBySDKVersion(File file, String authority) {
+		Log.d(LogCollectorEmail.class.getSimpleName(), "getFileUriBySDKVersion file: " + file + ", authority: " + authority);
+		if (file == null){
+			Log.e(LogCollectorEmail.class.getSimpleName(), "Error in getting Uri by file, file is null.");
+			return null;
+		}
+
+		Uri result;
+		if (Build.VERSION.SDK_INT >= 24) {
+			if(authority == null) {
+				Log.e(LogCollectorEmail.class.getSimpleName(), "Error in getting Uri by file, authority is null.");
+				return null;
+			}
+			result = FileProvider.getUriForFile(mContext, authority, file);
+		} else {
+			result = Uri.fromFile(file);
+		}
+		return result;
 	}
 
 	@Override
-	public void onLogCollected(File path, String mimeType) {
+	public void onLogCollected(File path, String mimeType, String authority) {
 		Intent emailIntent = new Intent(android.content.Intent.ACTION_SEND);
 		emailIntent.setType("message/rfc822"/* "text/plain" */);
-		emailIntent.putExtra(android.content.Intent.EXTRA_STREAM, Uri.fromFile(path));
+		//emailIntent.putExtra(android.content.Intent.EXTRA_STREAM, Uri.fromFile(path));
+		emailIntent.putExtra(android.content.Intent.EXTRA_STREAM, getFileUriBySDKVersion(path, authority)); //fixed crash on API 24 and above
 		emailIntent.setType(mimeType);
 		if (mRecipients != null) emailIntent.putExtra(android.content.Intent.EXTRA_EMAIL, mRecipients);
 		if (mTitle != null) emailIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, mTitle);

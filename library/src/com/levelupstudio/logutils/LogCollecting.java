@@ -9,8 +9,9 @@ public interface LogCollecting {
 	 * 
 	 * @param path the file containing the collected data
 	 * @param mimeType the MIME type of the file, or {@code null} if unknown
+	 * @param  authority the authority used to get Uri from path
 	 */
-	void onLogCollected(File path, String mimeType);
+	void onLogCollected(File path, String mimeType, String authority);
 
 	/**
 	 * Triggered when if the collected log is empty

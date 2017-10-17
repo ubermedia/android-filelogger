@@ -53,6 +53,7 @@ public class FileLogger {
 	 */
 	private File finalPath;
 	private FLogLevel logLevel = FLogLevel.I;
+	private String authority;
 
 	/**
 	 * Create a file for writing logs.
@@ -162,7 +163,7 @@ public class FileLogger {
 								if (olderLogFile.exists())
 									mergeFile(olderLogFile, finalPath);
 								mergeFile(mCurrentLogFile, finalPath);
-								((LogCollecting) msg.obj).onLogCollected(finalPath, "text/csv");
+								((LogCollecting) msg.obj).onLogCollected(finalPath, "text/csv", authority);
 							}
 						} catch (IOException e) {
 							((LogCollecting) msg.obj).onLogCollectingError(e.getMessage()+" - file:"+finalPath);
@@ -538,5 +539,9 @@ public class FileLogger {
 
 	void setFinalPath(File finalPath) {
 		this.finalPath = finalPath;
+	}
+
+	public void setAuthority(String authority) {
+		this.authority = authority;
 	}
 }
